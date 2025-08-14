@@ -15,6 +15,7 @@ const transformerRef = ref(null)
 const isPanning = ref(false)
 const collidingIds = ref(new Set())
 const highlightedCell = ref(null)
+const mostrarGrid = ref(true)
 
 // Límites de zoom
 const MIN_SCALE = 0.25
@@ -24,6 +25,7 @@ const elementoActual = computed(() => store.elementoActual)
 const vistaModo = computed(() => store.proyecto.vistaModo)
 const pared = computed(() => store.proyecto.pared)
 const elementoSeleccionado = computed(() => store.elementoSeleccionado)
+const stage = computed(() => stageRef.value?.getNode())
 
 // Pan con Space sostenido
 function handleKeyDown(e) {
@@ -305,63 +307,36 @@ const elementosVisibles = computed(() => {
   }
 })
 
-function highlightCell(fila, col) {
-  highlightedCell.value = { fila, col }
-}
-
-function unhighlightCell() {
-  highlightedCell.value = null
-}
-
-function selectCell(fila, col) {
-  // Si hay elemento en buffer, pegarlo en esta celda
-  if (store.buffer) {
-    store.sacarDeBufferA(store.proyecto.vistaActual, { fila, col })
-  } else {
-    console.log(`Celda seleccionada: ${fila}, ${col}`)
-  }
-}
-
 // Funciones para indicadores de pared en vistas laterales
 function getWallIndicators() {
   if (vistaModo.value === 'xy') return []
   
   const indicators = []
-  const pl = elementoActual.value
-  if (!pl) return indicators
-  
-  const w = width.value
-  const h = height.value
-  const wallHeight = 50 // Altura visual de la pared
   
   if (vistaModo.value === 'zx') {
-    // Vista lateral Norte/Sur - mostrar pared norte y sur
+    // Vista lateral Norte/Sur - mostrar indicador de pared
     if (pared.value === 'norte') {
       indicators.push({
-        type: 'wall',
-        label: 'Pared Norte',
-        rect: { x: 0, y: h - wallHeight, width: w, height: wallHeight, fill: '#f3f4f6', stroke: '#9ca3af' }
+        position: 'bottom',
+        name: 'Norte'
       })
     } else if (pared.value === 'sur') {
       indicators.push({
-        type: 'wall',
-        label: 'Pared Sur',
-        rect: { x: 0, y: h - wallHeight, width: w, height: wallHeight, fill: '#f3f4f6', stroke: '#9ca3af' }
+        position: 'bottom',
+        name: 'Sur'
       })
     }
   } else if (vistaModo.value === 'zy') {
-    // Vista lateral Este/Oeste - mostrar pared este u oeste
+    // Vista lateral Este/Oeste - mostrar indicador de pared
     if (pared.value === 'oeste') {
       indicators.push({
-        type: 'wall',
-        label: 'Pared Oeste',
-        rect: { x: 0, y: h - wallHeight, width: w, height: wallHeight, fill: '#f3f4f6', stroke: '#9ca3af' }
+        position: 'left',
+        name: 'Oeste'
       })
     } else if (pared.value === 'este') {
       indicators.push({
-        type: 'wall',
-        label: 'Pared Este',
-        rect: { x: 0, y: h - wallHeight, width: w, height: wallHeight, fill: '#f3f4f6', stroke: '#9ca3af' }
+        position: 'right',
+        name: 'Este'
       })
     }
   }
@@ -370,6 +345,74 @@ function getWallIndicators() {
 }
 
 const wallIndicators = computed(() => getWallIndicators())
+
+// Sistema de grid mejorado
+const gridCells = computed(() => {
+  if (!elementoActual.value?.custom?.grid || !mostrarGrid.value) return []
+  
+  const grid = elementoActual.value.custom.grid
+  const ancho = elementoActual.value.props.ancho
+  const largo = elementoActual.value.props.largo
+  const cellWidth = ancho / grid.cols
+  const cellHeight = largo / grid.filas
+  
+  const cells = []
+  for (let row = 0; row < grid.filas; row++) {
+    for (let col = 0; col < grid.cols; col++) {
+      cells.push({
+        row: row + 1,
+        col: col + 1,
+        x: col * cellWidth,
+        y: row * cellHeight,
+        width: cellWidth,
+        height: cellHeight,
+        destacada: highlightedCell.value?.fila === row + 1 && highlightedCell.value?.col === col + 1
+      })
+    }
+  }
+  return cells
+})
+
+const gridLines = computed(() => {
+  if (!elementoActual.value?.custom?.grid || !mostrarGrid.value) return []
+  
+  const grid = elementoActual.value.custom.grid
+  const ancho = elementoActual.value.props.ancho
+  const largo = elementoActual.value.props.largo
+  const lines = []
+  
+  // Líneas verticales
+  for (let i = 0; i <= grid.cols; i++) {
+    const x = (ancho / grid.cols) * i
+    lines.push({
+      points: [x, 0, x, largo]
+    })
+  }
+  
+  // Líneas horizontales
+  for (let i = 0; i <= grid.filas; i++) {
+    const y = (largo / grid.filas) * i
+    lines.push({
+      points: [0, y, ancho, y]
+    })
+  }
+  
+  return lines
+})
+
+function onGridCellClick(cell) {
+  if (store.buffer) {
+    store.sacarDeBufferA(store.proyecto.vistaActual, { fila: cell.row, col: cell.col })
+  }
+}
+
+function onGridCellHover(cell, isEntering) {
+  if (isEntering) {
+    highlightedCell.value = { fila: cell.row, col: cell.col }
+  } else {
+    highlightedCell.value = null
+  }
+}
 </script>
 
 <template>
@@ -392,43 +435,51 @@ const wallIndicators = computed(() => getWallIndicators())
             listening: true
           }"
         />
-        <!-- Grid overlay si el elemento actual tiene grid (vista contenedor) -->
-        <template v-if="vistaModo === 'xy' && elementoActual?.custom?.grid">
-          <template v-for="i in elementoActual.custom.grid.columnas + 1" :key="'v'+i">
-            <v-line :config="{
-              points: [ (elementoActual.props.ancho/elementoActual.custom.grid.columnas) * (i-1), 0, (elementoActual.props.ancho/elementoActual.custom.grid.columnas) * (i-1), elementoActual.props.largo ],
-              stroke: '#d1d5db',
-              strokeWidth: i === 1 || i === elementoActual.custom.grid.columnas + 1 ? 2 : 1,
+        <!-- Grid overlay mejorado -->
+        <v-layer v-if="mostrarGrid && gridCells.length > 0">
+          <!-- Líneas de grid con gradiente -->
+          <v-line v-for="(line, i) in gridLines" :key="'grid-line-' + i"
+            :config="{
+              points: line.points,
+              stroke: 'rgba(99, 102, 241, 0.2)',
+              strokeWidth: 1,
+              dash: [4, 4],
               listening: false
-            }" />
-          </template>
-          <template v-for="j in elementoActual.custom.grid.filas + 1" :key="'h'+j">
-            <v-line :config="{
-              points: [ 0, (elementoActual.props.largo/elementoActual.custom.grid.filas) * (j-1), elementoActual.props.ancho, (elementoActual.props.largo/elementoActual.custom.grid.filas) * (j-1) ],
-              stroke: '#d1d5db',
-              strokeWidth: j === 1 || j === elementoActual.custom.grid.filas + 1 ? 2 : 1,
+            }"
+          />
+          
+          <!-- Celdas interactivas con efectos hover -->
+          <v-rect v-for="cell in gridCells" :key="'grid-cell-' + cell.row + '-' + cell.col"
+            :config="{
+              x: cell.x,
+              y: cell.y,
+              width: cell.width,
+              height: cell.height,
+              fill: cell.destacada ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
+              stroke: cell.destacada ? 'rgba(99, 102, 241, 0.4)' : 'rgba(99, 102, 241, 0.1)',
+              strokeWidth: cell.destacada ? 2 : 1,
+              listening: true,
+              name: 'grid-cell'
+            }"
+            @click="onGridCellClick(cell)"
+            @mouseenter="onGridCellHover(cell, true)"
+            @mouseleave="onGridCellHover(cell, false)"
+          />
+          
+          <!-- Labels de celdas con mejor tipografía -->
+          <v-text v-for="cell in gridCells.filter(c => c.destacada)" :key="'grid-label-' + cell.row + '-' + cell.col"
+            :config="{
+              x: cell.x + 4,
+              y: cell.y + 4,
+              text: `${cell.row},${cell.col}`,
+              fontSize: 10,
+              fontFamily: 'Inter, system-ui, sans-serif',
+              fontStyle: '500',
+              fill: 'rgba(99, 102, 241, 0.8)',
               listening: false
-            }" />
-          </template>
-          <!-- Celdas con highlighting al hover -->
-          <template v-for="fila in elementoActual.custom.grid.filas" :key="'cell-row-'+fila">
-            <template v-for="col in elementoActual.custom.grid.columnas" :key="'cell-'+fila+'-'+col">
-              <v-rect 
-                :config="{
-                  x: (elementoActual.props.ancho/elementoActual.custom.grid.columnas) * (col-1),
-                  y: (elementoActual.props.largo/elementoActual.custom.grid.filas) * (fila-1),
-                  width: elementoActual.props.ancho/elementoActual.custom.grid.columnas,
-                  height: elementoActual.props.largo/elementoActual.custom.grid.filas,
-                  fill: 'transparent',
-                  listening: true
-                }"
-                @mouseenter="highlightCell(fila, col)"
-                @mouseleave="unhighlightCell()"
-                @click="selectCell(fila, col)"
-              />
-            </template>
-          </template>
-        </template>
+            }"
+          />
+        </v-layer>
   <!-- Render de hijos del elemento actual o proyección -->
           />
         
@@ -497,16 +548,115 @@ const wallIndicators = computed(() => getWallIndicators())
       </v-layer>
     </v-stage>
 
-  <div class="absolute top-2 left-2 bg-white/90 rounded-lg px-3 py-2 text-xs shadow-md text-gray-700" ref="containerRef">
-      <div><b>Tips:</b> <kbd>Rueda</kbd> = Zoom, <kbd>Space</kbd> + Arrastrar = Pan, <kbd>Doble click</kbd> = Entrar</div>
-    </div>
-    <div class="absolute top-2 left-2 bg-white/90 rounded-lg px-3 py-2 text-xs shadow-md text-gray-700" ref="containerRef">
-      <div><b>Tips:</b> <kbd>Rueda</kbd> = Zoom, <kbd>Space</kbd> + Arrastrar = Pan, <kbd>Doble click</kbd> = Entrar</div>
-      <div v-if="vistaModo !== 'xy'" class="mt-1 text-blue-600">
-        <b>Vista {{ vistaModo.toUpperCase() }}:</b> Pared {{ pared }} • {{ elementosVisibles.length }} elementos cercanos
+    <!-- Controles de canvas mejorados -->
+    <div class="absolute top-4 left-4 z-10 flex flex-col gap-3">
+      <!-- Grid toggle con diseño moderno -->
+      <div class="bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200/50 shadow-lg p-3">
+        <label class="flex items-center gap-3 cursor-pointer">
+          <div class="relative">
+            <input 
+              type="checkbox" 
+              v-model="mostrarGrid" 
+              class="sr-only" 
+            />
+            <div class="w-11 h-6 bg-slate-200 rounded-full shadow-inner transition-colors duration-200"
+                 :class="mostrarGrid ? 'bg-gradient-to-r from-indigo-500 to-purple-600' : 'bg-slate-200'">
+            </div>
+            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-md transition-transform duration-200"
+                 :class="mostrarGrid ? 'transform translate-x-5' : ''">
+            </div>
+          </div>
+          <span class="text-sm font-medium text-slate-700 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+            </svg>
+            Grid
+          </span>
+        </label>
       </div>
-      <div v-if="elementoActual?.custom?.grid" class="mt-1 text-green-600">
-        <b>Grid:</b> {{ elementoActual.custom.grid.filas }}×{{ elementoActual.custom.grid.columnas }} • Click en celda para pegar buffer
+
+      <!-- Información del zoom -->
+      <div class="bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200/50 shadow-lg px-4 py-2">
+        <div class="flex items-center gap-2 text-xs text-slate-600">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          Zoom: {{ Math.round((stage?.scaleX() || 1) * 100) }}%
+        </div>
+      </div>
+
+      <!-- Vista actual indicator -->
+      <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-lg px-4 py-2 text-white">
+        <div class="flex items-center gap-2 text-xs font-medium">
+          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+          {{ store.proyecto.vistaActual }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Indicadores de pared con diseño mejorado -->
+    <div v-if="wallIndicators.length > 0" class="absolute inset-4 pointer-events-none z-10">
+      <div v-for="wall in wallIndicators" :key="wall.position" 
+           class="absolute bg-gradient-to-r from-slate-800/80 to-slate-700/80 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm font-medium shadow-lg border border-white/20"
+           :style="{ 
+             [wall.position]: '16px',
+             ...(wall.position === 'top' || wall.position === 'bottom' ? { left: '50%', transform: 'translateX(-50%)' } : {}),
+             ...(wall.position === 'left' || wall.position === 'right' ? { top: '50%', transform: 'translateY(-50%)' } : {})
+           }">
+        <div class="flex items-center gap-2">
+          <div class="w-2 h-2 bg-white rounded-full"></div>
+          Pared {{ wall.name }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Tips mejorados -->
+    <div class="absolute bottom-4 left-4 z-10">
+      <div class="bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200/50 shadow-lg p-4 max-w-md">
+        <div class="flex items-start gap-3">
+          <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div class="space-y-1 text-xs text-slate-600">
+            <div class="font-semibold text-slate-800 mb-2">Controles</div>
+            <div class="flex items-center gap-2">
+              <kbd class="px-1.5 py-0.5 bg-slate-100 rounded border text-slate-700 font-mono text-xs">Rueda</kbd>
+              <span>Zoom</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <kbd class="px-1.5 py-0.5 bg-slate-100 rounded border text-slate-700 font-mono text-xs">Space</kbd>
+              <span>+ Arrastrar = Pan</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <kbd class="px-1.5 py-0.5 bg-slate-100 rounded border text-slate-700 font-mono text-xs">Doble click</kbd>
+              <span>Entrar elemento</span>
+            </div>
+            
+            <div v-if="vistaModo !== 'xy'" class="mt-3 pt-2 border-t border-slate-200">
+              <div class="flex items-center gap-2 text-indigo-600">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                <span class="font-medium">Vista {{ vistaModo.toUpperCase() }}</span>
+              </div>
+              <div class="text-slate-500">Pared {{ pared }} • {{ elementosVisibles.length }} elementos</div>
+            </div>
+            
+            <div v-if="elementoActual?.custom?.grid" class="mt-3 pt-2 border-t border-slate-200">
+              <div class="flex items-center gap-2 text-emerald-600">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6z"/>
+                </svg>
+                <span class="font-medium">Grid {{ elementoActual.custom.grid.filas }}×{{ elementoActual.custom.grid.columnas }}</span>
+              </div>
+              <div class="text-slate-500">Click en celda para pegar buffer</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

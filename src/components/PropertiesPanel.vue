@@ -41,148 +41,187 @@ function updatePlantaGrid(prop, value) {
 </script>
 
 <template>
-  <div class="p-4 bg-white h-full space-y-6">
-    <h2 class="text-lg font-semibold text-gray-800">Propiedades</h2>
-
-    <div v-if="elementoSeleccionado">
-      <div class="mb-4">
-        <span class="text-sm font-medium text-gray-500">Editando</span>
-        <p class="text-lg font-semibold text-gray-900">{{ elementoSeleccionado.custom?.nombre || elementoSeleccionado.tipo }}</p>
-        <p class="text-xs text-gray-400">ID: {{ elementoSeleccionado.id }}</p>
-      </div>
-
-      <div class="space-y-4">
-        <div>
-          <h3 class="mb-2 font-semibold text-gray-700">General</h3>
-          <label class="block text-sm">
-            <span class="font-medium text-gray-600">Nombre</span>
-            <input type="text" class="mt-1 border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 w-full"
-                   :value="elementoSeleccionado.custom?.nombre || ''"
-                   @input="updateCustom('nombre', $event.target.value)" />
-          </label>
+  <div class="h-full flex flex-col">
+    <!-- Header elegante -->
+    <div class="p-6 border-b border-slate-200/50">
+      <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+        <div class="w-6 h-6 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-md flex items-center justify-center">
+          <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"/>
+          </svg>
         </div>
-        <div>
-          <h3 class="mb-2 font-semibold text-gray-700">Transformación</h3>
-          <div class="grid grid-cols-2 gap-3 text-sm">
-            <label class="block">
-              <span class="font-medium text-gray-600">Pos X</span>
-              <input type="number" class="mt-1 border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 w-full"
-                     :value="elementoSeleccionado.props.x"
-                     @input="update('x', +$event.target.value)" />
-            </label>
-            <label class="block">
-              <span class="font-medium text-gray-600">Pos Y</span>
-              <input type="number" class="mt-1 border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 w-full"
-                     :value="elementoSeleccionado.props.y"
-                     @input="update('y', +$event.target.value)" />
-            </label>
-            <label class="block">
-              <span class="font-medium text-gray-600">Ancho</span>
-              <input type="number" class="mt-1 border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 w-full"
-                     :value="elementoSeleccionado.props.ancho"
-                     @input="update('ancho', +$event.target.value)" />
-            </label>
-            <label class="block">
-              <span class="font-medium text-gray-600">Largo</span>
-              <input type="number" class="mt-1 border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 w-full"
-                     :value="elementoSeleccionado.props.largo"
-                     @input="update('largo', +$event.target.value)" />
-            </label>
-            <label class="block col-span-2">
-              <span class="font-medium text-gray-600">Rotación</span>
-              <input type="number" class="mt-1 border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 w-full"
-                     :value="elementoSeleccionado.props.rotation"
-                     @input="update('rotation', +$event.target.value)" />
-            </label>
-          </div>
-        </div>
-
-        <div>
-          <h3 class="mb-2 font-semibold text-gray-700">Apariencia</h3>
-          <label class="block">
-            <span class="font-medium text-gray-600">Color</span>
-            <input type="color" class="mt-1 w-full h-10 rounded-md border-gray-300"
-                   :value="elementoSeleccionado.custom.color"
-                   @input="updateCustom('color', $event.target.value)" />
-          </label>
-        </div>
-
-        <hr class="border-gray-200" />
-
-        <div>
-          <h3 class="mb-2 font-semibold text-gray-700">Acciones</h3>
-          <button
-            @click="eliminar"
-            class="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" />
-            </svg>
-            Eliminar
-          </button>
-        </div>
-      </div>
+        Propiedades
+      </h2>
     </div>
-    <div v-else>
-      <div class="mb-4">
-        <span class="text-sm font-medium text-gray-500">Planta actual</span>
-        <p class="text-lg font-semibold text-gray-900">{{ plantaActual?.custom?.nombre || 'Planta' }}</p>
-        <p class="text-xs text-gray-400">ID: {{ plantaActual?.id }}</p>
+
+    <div class="flex-1 overflow-y-auto">
+      <!-- Panel para elemento seleccionado -->
+      <div v-if="elementoSeleccionado" class="p-6">
+        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-200 p-5 mb-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
+                 :style="{ backgroundColor: elementoSeleccionado.props.fill || '#6366f1' }">
+              {{ elementoSeleccionado.shape === 'circle' ? '●' : '■' }}
+            </div>
+            <div>
+              <h3 class="font-semibold text-slate-800">{{ elementoSeleccionado.custom?.nombre || elementoSeleccionado.tipo }}</h3>
+              <div class="text-xs text-slate-500 font-mono">{{ elementoSeleccionado.id.substring(0, 8) }}</div>
+            </div>
+          </div>
+
+          <!-- Propiedades básicas con mejor diseño -->
+          <div class="space-y-4">
+            <div class="bg-white/60 rounded-lg p-3 border border-blue-200/50">
+              <label class="block text-xs font-semibold text-slate-600 mb-2">Nombre</label>
+              <input 
+                type="text" 
+                :value="elementoSeleccionado.custom?.nombre || ''" 
+                @input="updateCustom('nombre', $event.target.value)"
+                class="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                placeholder="Sin nombre"
+              />
+            </div>
+
+            <!-- Posición y dimensiones -->
+            <div class="bg-white/60 rounded-lg p-4 border border-blue-200/50">
+              <h4 class="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+                </svg>
+                Transformación
+              </h4>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">X</label>
+                  <input 
+                    type="number" 
+                    :value="elementoSeleccionado.props.x" 
+                    @input="update('x', +$event.target.value)"
+                    class="w-full px-2 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Y</label>
+                  <input 
+                    type="number" 
+                    :value="elementoSeleccionado.props.y" 
+                    @input="update('y', +$event.target.value)"
+                    class="w-full px-2 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Ancho</label>
+                  <input 
+                    type="number" 
+                    :value="elementoSeleccionado.props.ancho" 
+                    @input="update('ancho', +$event.target.value)"
+                    class="w-full px-2 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Largo</label>
+                  <input 
+                    type="number" 
+                    :value="elementoSeleccionado.props.largo" 
+                    @input="update('largo', +$event.target.value)"
+                    class="w-full px-2 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div class="col-span-2">
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Rotación</label>
+                  <input 
+                    type="number" 
+                    :value="elementoSeleccionado.props.rotation" 
+                    @input="update('rotation', +$event.target.value)"
+                    class="w-full px-2 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Acciones rápidas -->
+            <div class="flex gap-2">
+              <button 
+                @click="eliminar()"
+                class="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-medium px-4 py-2.5 rounded-xl transition-all duration-200 flex items-center justify-center gap-2"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                </svg>
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="space-y-4" v-if="plantaActual">
-        <div>
-          <h3 class="mb-2 font-semibold text-gray-700">General</h3>
-          <label class="block text-sm">
-            <span class="font-medium text-gray-600">Nombre</span>
-            <input type="text" class="mt-1 border-gray-300 rounded-md shadow-sm w-full"
-                   :value="plantaActual.custom?.nombre || ''"
-                   @input="store.actualizarElemento(plantaActual.id, null, { nombre: $event.target.value })" />
-          </label>
-        </div>
-        <div>
-          <h3 class="mb-2 font-semibold text-gray-700">Dimensiones</h3>
-          <div class="grid grid-cols-2 gap-3 text-sm">
-            <label class="block">
-              <span class="font-medium text-gray-600">Ancho</span>
-              <input type="number" class="mt-1 border-gray-300 rounded-md shadow-sm w-full"
-                     :value="plantaActual.props.ancho"
-                     @input="store.actualizarElemento(plantaActual.id, { ancho: +$event.target.value })" />
-            </label>
-            <label class="block">
-              <span class="font-medium text-gray-600">Largo</span>
-              <input type="number" class="mt-1 border-gray-300 rounded-md shadow-sm w-full"
-                     :value="plantaActual.props.largo"
-                     @input="store.actualizarElemento(plantaActual.id, { largo: +$event.target.value })" />
-            </label>
-            <label class="block col-span-2">
-              <span class="font-medium text-gray-600">Altura</span>
-              <input type="number" class="mt-1 border-gray-300 rounded-md shadow-sm w-full"
-                     :value="plantaActual.props.altura"
-                     @input="store.actualizarElemento(plantaActual.id, { altura: +$event.target.value })" />
-            </label>
+
+      <!-- Panel para planta actual -->
+      <div v-if="plantaActual" class="p-6 border-t border-slate-200/50">
+        <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200 p-5">
+          <h3 class="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+            </svg>
+            Configuración de planta
+          </h3>
+
+          <div class="space-y-4">
+            <!-- Grid configuration -->
+            <div class="bg-white/60 rounded-lg p-3 border border-green-200/50">
+              <div class="flex items-center justify-between mb-3">
+                <label class="text-xs font-semibold text-slate-600 flex items-center gap-2">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                  </svg>
+                  Sistema de grillas
+                </label>
+              </div>
+              
+              <div v-if="plantaActual.custom?.grid" class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Filas</label>
+                  <input 
+                    type="number" 
+                    :value="plantaActual.custom.grid.filas" 
+                    @input="updatePlantaGrid('filas', parseFloat($event.target.value))"
+                    class="w-full px-2 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                    min="1"
+                    max="20"
+                  />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium text-slate-600 mb-1">Columnas</label>
+                  <input 
+                    type="number" 
+                    :value="plantaActual.custom.grid.cols" 
+                    @input="updatePlantaGrid('cols', parseFloat($event.target.value))"
+                    class="w-full px-2 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                    min="1"
+                    max="20"
+                  />
+                </div>
+              </div>
+              
+              <div v-if="!plantaActual.custom?.grid" class="text-xs text-slate-500 italic text-center py-2">
+                Un grid divide la planta en celdas para posicionamiento preciso
+              </div>
+            </div>
           </div>
         </div>
-        
-        <!-- Configuración de Grid si el elemento lo soporta -->
-        <div v-if="plantaActual.tipo === 'planta' || plantaActual.custom?.grid">
-          <h3 class="mb-2 font-semibold text-gray-700">Grid (contenedor)</h3>
-          <div class="grid grid-cols-2 gap-3 text-sm">
-            <label class="block">
-              <span class="font-medium text-gray-600">Filas</span>
-              <input type="number" min="0" class="mt-1 border-gray-300 rounded-md shadow-sm w-full"
-                     :value="plantaActual.custom?.grid?.filas || 0"
-                     @input="updatePlantaGrid('filas', +$event.target.value)" />
-            </label>
-            <label class="block">
-              <span class="font-medium text-gray-600">Columnas</span>
-              <input type="number" min="0" class="mt-1 border-gray-300 rounded-md shadow-sm w-full"
-                     :value="plantaActual.custom?.grid?.columnas || 0"
-                     @input="updatePlantaGrid('columnas', +$event.target.value)" />
-            </label>
+      </div>
+
+      <!-- Estado vacío con mejor diseño -->
+      <div v-if="!elementoSeleccionado && !plantaActual" class="p-6 flex items-center justify-center h-full">
+        <div class="text-center">
+          <div class="w-16 h-16 bg-gradient-to-br from-slate-200 to-slate-300 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"/>
+            </svg>
           </div>
-          <div class="text-xs text-gray-500 mt-1">
-            Grid activo: {{ plantaActual.custom?.grid ? 'Sí' : 'No' }}
-          </div>
+          <h3 class="text-lg font-semibold text-slate-700 mb-2">Sin selección</h3>
+          <p class="text-sm text-slate-500 max-w-xs">
+            Selecciona un elemento en el canvas para ver y editar sus propiedades
+          </p>
         </div>
       </div>
     </div>

@@ -43,23 +43,27 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="flex flex-col h-screen bg-gray-50">
-    <div class="border-b border-gray-200 bg-white">
+  <div class="flex flex-col h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <!-- Header con gradiente y sombra -->
+    <div class="border-b border-slate-200/50 bg-white/80 backdrop-blur-sm shadow-sm">
       <FloorsPanel />
     </div>
-    <div class="flex-1 flex">
-      <div class="w-64 border-r border-gray-200">
+    <!-- Main content con paneles redondeados -->
+    <div class="flex-1 flex gap-3 p-3">
+      <!-- Sidebar izquierda -->
+      <div class="w-72 bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200/50 shadow-lg overflow-hidden">
         <Sidebar />
       </div>
-      <div class="flex-1 flex flex-col">
+      <!-- Canvas central -->
+      <div class="flex-1 bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200/50 shadow-lg overflow-hidden">
         <CanvasView />
       </div>
-      <div class="w-72 border-l border-gray-200">
+      <!-- Panel de propiedades derecha -->
+      <div class="w-80 bg-white/90 backdrop-blur-sm rounded-xl border border-slate-200/50 shadow-lg overflow-hidden">
         <PropertiesPanel />
       </div>
     </div>
   </div>
-  
 </template>
 
 <style scoped>
